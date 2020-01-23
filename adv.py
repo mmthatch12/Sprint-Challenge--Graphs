@@ -56,6 +56,7 @@ class Graph:
         random.shuffle(dir_list)
         next_dir = dir_list.pop()
         player.travel(next_dir)
+        traversal_path.append(next_dir)
         for direction in self.rooms[room]:
             if direction == next_dir:
                 self.rooms[room][direction] = player.current_room.id
@@ -80,14 +81,60 @@ class Graph:
                     self.rooms[player.current_room.id]['w'] = room
                 if next_dir == 'w':
                     self.rooms[player.current_room.id]['e'] = room
+        return player.current_room.id
 
-    def dft(self):
-        pass
+    def dft(self, starting_room):
+        stack = Stack()
+        stack.push([starting_room])
+
+        visited = []
+
+        while stack.size() > 0:
+
+            room = stack.pop()
+            visited.append(room)
+            self.connect_rooms(room)
+
+            # if room not in visited:
+                
+            # visited[room] = new_path
+
+            # for roo in self.rooms[room]:
+                # path_copy = new_path.copy()
+                # path_copy.append(roo)
+                # stack.push(path_copy)
+    
+    def bfs(self, room_id):
+
+        visited = {}
+
+        queue = Queue()
+
+        queue.enqueue([room_id])
+
+        while queue.size() > 0:
+            new_path = queue.dequeue()
+            room = new_path[-1]
+
+            if room not in visited:
+                visited[room] = new_path
+
+                for roo in self.rooms[room]:
+                    path_copy = new_path.copy()
+                    path_copy.append(roo)
+                    queue.enqueue(path_copy)
+
+
+
+# Start by writing an algorithm that picks a random unexplored direction from the 
+# player's current room, travels and logs that direction, then loops. This should
+# cause your player to walk a depth-first traversal. When you reach a 
+# dead-end (i.e. a room with no unexplored paths), walk back to the nearest 
+# room that does contain an unexplored path.
         
 
 tg = Graph()
 tg.add_room(player.current_room.id)
-tg.connect_rooms(player.current_room.id)
 tg.connect_rooms(player.current_room.id)
 print("----printing rooms test")
 print(tg.rooms)
