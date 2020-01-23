@@ -47,47 +47,41 @@ class Graph:
     def connect_rooms(self, room):
         dir_list = []
         for direction in self.rooms[room]:
-            if direction == '?':
+            if self.rooms[room][direction] == '?':
                 dir_list.append(direction)
         random.shuffle(dir_list)
-        next_dir = dir_list[0]
+        next_dir = dir_list.pop()
         player.travel(next_dir)
         for direction in self.rooms[room]:
             if direction == next_dir:
-                direction[next_dir] = player.current_room.id
+                self.rooms[room][direction] = player.current_room.id
         if player.current_room.id not in self.rooms:
             self.add_room(player.current_room.id)
             for direction in self.rooms[player.current_room.id]:
                 if next_dir == 'n':
-                    direction['s'] = room.id
+                    self.rooms[player.current_room.id]['s'] = room
                 if next_dir == 's':
-                    direction['n'] = room.id
+                    self.rooms[player.current_room.id]['n'] = room
                 if next_dir == 'e':
-                    direction['w'] = room.id
+                    self.rooms[player.current_room.id]['w'] = room
                 if next_dir == 'w':
-                    direction['e'] = room.id
+                    self.rooms[player.current_room.id]['e'] = room
         else:
             for direction in self.rooms[player.current_room.id]:
                 if next_dir == 'n':
-                    direction['s'] = room.id
+                    self.rooms[player.current_room.id]['s'] = room
                 if next_dir == 's':
-                    direction['n'] = room.id
+                    self.rooms[player.current_room.id]['n'] = room
                 if next_dir == 'e':
-                    direction['w'] = room.id
+                    self.rooms[player.current_room.id]['w'] = room
                 if next_dir == 'w':
-                    direction['e'] = room.id
+                    self.rooms[player.current_room.id]['e'] = room
         
-        
-        # add directions to current_room
-        # if curr_room not in self.rooms:
-        #     directions_list = player.current_room.get_exits()
-        #     directions = {}
-        #     for direct in directions_list:
-        #         directions[direct] = '?'
-        #     self.rooms[curr_room] = directions
 
 tg = Graph()
 tg.add_room(player.current_room.id)
+tg.connect_rooms(player.current_room.id)
+tg.connect_rooms(player.current_room.id)
 print("----printing rooms test")
 print(tg.rooms)
 # start by writing an algorithm that picks a random unexplored direction
