@@ -1,6 +1,7 @@
 from room import Room
 from player import Player
 from world import World
+from util import Queue, Stack
 
 import random
 from ast import literal_eval
@@ -32,6 +33,8 @@ traversal_path = []
 class Graph:
     def __init__(self):
         # vertices
+        # do I need a counter to keep track of all added rooms?
+        self.rooms_count = 0
         self.rooms = {}
     def add_room(self, room):
         # add vertex to the graph with dictionary as value
@@ -41,6 +44,7 @@ class Graph:
             for direct in directions_list:
                 directions[direct] = '?'
             self.rooms[room] = directions
+            self.rooms_count +=1
         else:
             print(f"room: {room} already exists, did not add.")
             return False
@@ -76,6 +80,9 @@ class Graph:
                     self.rooms[player.current_room.id]['w'] = room
                 if next_dir == 'w':
                     self.rooms[player.current_room.id]['e'] = room
+
+    def dft(self):
+        pass
         
 
 tg = Graph()
@@ -84,11 +91,7 @@ tg.connect_rooms(player.current_room.id)
 tg.connect_rooms(player.current_room.id)
 print("----printing rooms test")
 print(tg.rooms)
-# start by writing an algorithm that picks a random unexplored direction
-# from the player's current room, travels and logs that direction, then 
-# loops. This should cause your player to walk a depth-first traversal.
-# When you reach a dead-end(i.e. a room wiht no unexplored paths), 
-# walk back to the nearest room that does contain an unexplored path.
+
 
 #You can find the path to the shortest unexplored room by using a 
 # breadth-first search for a room with '?' for an exit. If you use the 
