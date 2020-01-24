@@ -109,8 +109,7 @@ class Graph:
                 next_dir = dir_list.pop()
                 next_room = self.connect_rooms(next_dir, curr_room)
                 visited_rooms.append(next_room)
-                for adj_room in self.rooms[curr_room]:
-                    stack.push(adj_room)
+                stack.push(next_room)
     
     def bfs(self, room_id):
 
@@ -118,50 +117,36 @@ class Graph:
 
         queue.enqueue([room_id])
 
-        visited = {}
+        visited = set()
 
         while queue.size() > 0:
             new_path = queue.dequeue()
             room = new_path[-1]
+            # if not on first while iteration, move the player to the 
+            # next room, so that when bfs returns the visited set
+            # the player will in the room at the end of the set
+            if room != room_id:
+                cur_room = new_path[-2]
+                for direct in self.rooms[cur_room]:
+                    if self.rooms[cur_room][direct] == room:
+                        player.travel(direct)
 
             if room not in visited:
-                if self.rooms[room_id]:
-                    visited[room] = new_path
-
+                dir_list = []
+                for direction in self.rooms[room]:
+                    if self.rooms[room][direction] == '?':
+                        dir_list.append(direction)
+                if len(dir_list) > 0:
+                    random.shuffle(dir_list)
+                    next_dir = dir_list.pop()
+                    next_room = self.connect_rooms(next_dir, room)
+                    visited.add(next_room)
+                    return visited
+                visited.add(room)
                 for roo in self.rooms[room]:
-                    path_copy = new_path.copy()
-                    path_copy.append(roo)
-                    queue.enqueue(path_copy)
-
-    # def dft(self, starting_room):
-    #     stack = Stack()
-    #     stack.push([starting_room])
-
-    #     visited = {}
-
-    #     while stack.size() > 0:
-
-    #         new_path = stack.pop()
-    #         room = new_path[-1]
-    #         if self.connect_rooms(room):
-    #             visited[room] = new_path
-    #             for roo in self.rooms[room]:
-    #                 path_copy = new_path.copy()
-    #                 path_copy.append(roo)
-    #                 stack.push(path_copy)
-    #         else:
-    #             self.bfs(room)
-
-
-    #         # if room not in visited:
-                
-    #         # visited[room] = new_path
-
-    #         # for roo in self.rooms[room]:
-    #             # path_copy = new_path.copy()
-    #             # path_copy.append(roo)
-    #             # stack.push(path_copy)
-
+                    next_path = list(new_path)
+                    next_path.append(self.rooms[room][roo])
+                    queue.enqueue(next_path)
 
 
 # Start by writing an algorithm that picks a random unexplored direction from the 
