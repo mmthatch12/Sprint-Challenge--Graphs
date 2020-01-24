@@ -11,8 +11,8 @@ world = World()
 
 
 # You may uncomment the smaller graphs for development and testing purposes.
-map_file = "maps/test_line.txt"
-# map_file = "maps/test_cross.txt"
+# map_file = "maps/test_line.txt"
+map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
 # map_file = "maps/main_maze.txt"
@@ -48,15 +48,8 @@ class Graph:
         else:
             print(f"room: {room} already exists, did not add.")
             return False
-    def connect_rooms(self, room):
-        dir_list = []
-        for direction in self.rooms[room]:
-            if self.rooms[room][direction] == '?':
-                dir_list.append(direction)
-        random.shuffle(dir_list)
-        next_dir = dir_list.pop()
+    def connect_rooms(self, next_dir, room):
         player.travel(next_dir)
-        traversal_path.append(next_dir)
         for direction in self.rooms[room]:
             if direction == next_dir:
                 self.rooms[room][direction] = player.current_room.id
@@ -83,46 +76,91 @@ class Graph:
                     self.rooms[player.current_room.id]['e'] = room
         return player.current_room.id
 
-    def dft(self, starting_room):
+    def dft_rand(self, starting_room):
+        
         stack = Stack()
-        stack.push([starting_room])
+        stack.push(starting_room)
 
-        visited = []
+        visited_rooms = []
 
         while stack.size() > 0:
+            curr_room = stack.pop()
+            dir_list = []
+            for direction in self.rooms[curr_room]:
+                if self.rooms[curr_room][direction] == '?':
+                    dir_list.append(direction)
 
-            room = stack.pop()
-            visited.append(room)
-            self.connect_rooms(room)
+            if len(dir_list) < 1:
+                print("You've reached a dead end.")
+                if self.bfs(curr_room):
+                    short_path = self.bfs(curr_room)
+                    visited_rooms.append(short_path)
+                    # need to convert this into a list and feed it
+                    # into visited rooms. Then also need to pop them
+                    # one by one onto the stack? Or just the last room
+                    # because that should be the current room. I think 
+                    # just the last room
+                else:
+                    print('You should be all done')
+                    return visited_rooms
 
-            # if room not in visited:
-                
-            # visited[room] = new_path
-
-            # for roo in self.rooms[room]:
-                # path_copy = new_path.copy()
-                # path_copy.append(roo)
-                # stack.push(path_copy)
+            else:
+                random.shuffle(dir_list)
+                next_dir = dir_list.pop()
+                next_room = self.connect_rooms(next_dir, curr_room)
+                visited_rooms.append(next_room)
+                for adj_room in self.rooms[curr_room]:
+                    stack.push(adj_room)
     
     def bfs(self, room_id):
-
-        visited = {}
 
         queue = Queue()
 
         queue.enqueue([room_id])
+
+        visited = {}
 
         while queue.size() > 0:
             new_path = queue.dequeue()
             room = new_path[-1]
 
             if room not in visited:
-                visited[room] = new_path
+                if self.rooms[room_id]:
+                    visited[room] = new_path
 
                 for roo in self.rooms[room]:
                     path_copy = new_path.copy()
                     path_copy.append(roo)
                     queue.enqueue(path_copy)
+
+    # def dft(self, starting_room):
+    #     stack = Stack()
+    #     stack.push([starting_room])
+
+    #     visited = {}
+
+    #     while stack.size() > 0:
+
+    #         new_path = stack.pop()
+    #         room = new_path[-1]
+    #         if self.connect_rooms(room):
+    #             visited[room] = new_path
+    #             for roo in self.rooms[room]:
+    #                 path_copy = new_path.copy()
+    #                 path_copy.append(roo)
+    #                 stack.push(path_copy)
+    #         else:
+    #             self.bfs(room)
+
+
+    #         # if room not in visited:
+                
+    #         # visited[room] = new_path
+
+    #         # for roo in self.rooms[room]:
+    #             # path_copy = new_path.copy()
+    #             # path_copy.append(roo)
+    #             # stack.push(path_copy)
 
 
 
@@ -135,9 +173,11 @@ class Graph:
 
 tg = Graph()
 tg.add_room(player.current_room.id)
-tg.connect_rooms(player.current_room.id)
+tg.dft_rand(player.current_room.id)
 print("----printing rooms test")
 print(tg.rooms)
+print('---traversal_path')
+print(traversal_path)
 
 
 #You can find the path to the shortest unexplored room by using a 
