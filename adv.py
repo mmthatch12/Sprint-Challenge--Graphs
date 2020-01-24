@@ -156,6 +156,15 @@ class Graph:
             else:
                 print("I think there are no more '?'")
                 return False
+    def rnum_to_directions(self, start_room):
+        room_id_list = self.dft_rand(start_room)
+        room_id_list.insert(0,0)
+        for room_id in room_id_list:
+            for direction in self.rooms[room_id]:
+                if self.rooms[room_id][direction] == room_id_list[room_id+1]:
+                    traversal_path.append(direction)
+        
+
 
 
 # Start by writing an algorithm that picks a random unexplored direction from the 
