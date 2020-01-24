@@ -94,7 +94,9 @@ class Graph:
                 print("You've reached a dead end.")
                 if self.bfs(curr_room):
                     short_path = self.bfs(curr_room)
-                    visited_rooms.append(short_path)
+                    for roo in short_path:
+                        visited_rooms.append(roo)
+                    stack.push(visited_rooms[-1])
                     # need to convert this into a list and feed it
                     # into visited rooms. Then also need to pop them
                     # one by one onto the stack? Or just the last room
@@ -109,6 +111,9 @@ class Graph:
                 next_dir = dir_list.pop()
                 next_room = self.connect_rooms(next_dir, curr_room)
                 visited_rooms.append(next_room)
+                for roo in self.rooms[curr_room]:
+                    if self.rooms[curr_room][roo] != next_room:
+                        stack.push(self.rooms[curr_room][roo])
                 stack.push(next_room)
     
     def bfs(self, room_id):
@@ -142,11 +147,15 @@ class Graph:
                     next_room = self.connect_rooms(next_dir, room)
                     visited.add(next_room)
                     return visited
-                visited.add(room)
+                if room != room_id:
+                    visited.add(room)
                 for roo in self.rooms[room]:
                     next_path = list(new_path)
                     next_path.append(self.rooms[room][roo])
                     queue.enqueue(next_path)
+            else:
+                print("I think there are no more '?'")
+                return False
 
 
 # Start by writing an algorithm that picks a random unexplored direction from the 
