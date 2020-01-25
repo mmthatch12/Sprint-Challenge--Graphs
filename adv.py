@@ -12,10 +12,10 @@ world = World()
 
 # You may uncomment the smaller graphs for development and testing purposes.
 # map_file = "maps/test_line.txt"
-map_file = "maps/test_cross.txt"
+# map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
-# map_file = "maps/main_maze.txt"
+map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph=literal_eval(open(map_file, "r").read())
@@ -48,146 +48,95 @@ class Graph:
         else:
             print(f"room: {room} already exists, did not add.")
             return False
-    def connect_rooms(self, next_dir, room):
-        player.travel(next_dir)
-        for direction in self.rooms[room]:
+    def connect_rooms(self, next_dir, curr_room, prev_room):
+        for direction in self.rooms[prev_room]:
             if direction == next_dir:
-                self.rooms[room][direction] = player.current_room.id
-        if player.current_room.id not in self.rooms:
-            self.add_room(player.current_room.id)
-            for direction in self.rooms[player.current_room.id]:
-                if next_dir == 'n':
-                    self.rooms[player.current_room.id]['s'] = room
-                if next_dir == 's':
-                    self.rooms[player.current_room.id]['n'] = room
-                if next_dir == 'e':
-                    self.rooms[player.current_room.id]['w'] = room
-                if next_dir == 'w':
-                    self.rooms[player.current_room.id]['e'] = room
-        else:
-            for direction in self.rooms[player.current_room.id]:
-                if next_dir == 'n':
-                    self.rooms[player.current_room.id]['s'] = room
-                if next_dir == 's':
-                    self.rooms[player.current_room.id]['n'] = room
-                if next_dir == 'e':
-                    self.rooms[player.current_room.id]['w'] = room
-                if next_dir == 'w':
-                    self.rooms[player.current_room.id]['e'] = room
-        return player.current_room.id
+                self.rooms[prev_room][direction] = curr_room
+        for direction in self.rooms[curr_room]:
+            if next_dir == 'n':
+                self.rooms[curr_room]['s'] = prev_room
+            if next_dir == 's':
+                self.rooms[curr_room]['n'] = prev_room
+            if next_dir == 'e':
+                self.rooms[curr_room]['w'] = prev_room
+            if next_dir == 'w':
+                self.rooms[curr_room]['e'] = prev_room
 
-    def dft_rand(self, starting_room):
+    def dft_rand(self):
         
         stack = Stack()
-        stack.push(starting_room)
+        stack.push(player.current_room)
 
-        visited_rooms = []
 
-        while stack.size() > 0:
+        random_dir = None
+        prev_room = None
+
+        while len(self.rooms) <= len(room_graph): 
             curr_room = stack.pop()
             dir_list = []
-            for direction in self.rooms[curr_room]:
-                if self.rooms[curr_room][direction] == '?':
-                    dir_list.append(direction)
+            if curr_room.id not in self.rooms:
+                self.add_room(curr_room.id)               
 
-            if len(dir_list) < 1:
-                print("You've reached a dead end.")
-                if self.bfs(curr_room):
-                    short_path = self.bfs(curr_room)
-                    for roo in short_path:
-                        visited_rooms.append(roo)
-                    stack.push(visited_rooms[-1])
-                    # need to convert this into a list and feed it
-                    # into visited rooms. Then also need to pop them
-                    # one by one onto the stack? Or just the last room
-                    # because that should be the current room. I think 
-                    # just the last room
-                else:
-                    print('You should be all done')
-                    return visited_rooms
+            if random_dir is None:
+                dir_list =[]
+                for direction in self.rooms[curr_room.id]:
+                    if self.rooms[curr_room.id][direction] == '?':
+                        dir_list.append(direction)
+                    random.shuffle(dir_list)
+                    random_dir = dir_list.pop()
+            if prev_room is not None:
+                self.connect_rooms(random_dir, curr_room.id, prev_room.id)
 
-            else:
-                random.shuffle(dir_list)
-                next_dir = dir_list.pop()
-                next_room = self.connect_rooms(next_dir, curr_room)
-                visited_rooms.append(next_room)
-                for roo in self.rooms[curr_room]:
-                    if self.rooms[curr_room][roo] != next_room:
-                        stack.push(self.rooms[curr_room][roo])
-                stack.push(next_room)
+            if random_dir not in self.rooms[curr_room.id]:
+                unex_list = []
+                for key, value in self.rooms[curr_room.id].items():
+                    if value == '?':
+                        unex_list.append(key)
+                if len(unex_list) == 0:
+                    path = self.bfs(curr_room)
+
+                    if path is None:
+                        return 
+                    new_room = path[-1][0]
+
+                    for move in path[1:]:
+                        traversal_path.append(move[1])
+                        player.travel(move[1])
+
+                    unex_list = []
+                    for key, value in self.rooms[new_room].items():
+                        if value == '?':
+                            unex_list.append(key)
+                    random.shuffle(unex_list)
+                random_dir = unex_list.pop()
+
+            traversal_path.append(random_dir)
+            prev_room = player.current_room
+            player.travel(random_dir)
+            stack.push(player.current_room)
     
-    def bfs(self, room_id):
-
+    def bfs(self, first_room):
         queue = Queue()
+        queue.enqueue([(first_room.id, "")])
 
-        queue.enqueue([room_id])
-
-        visited = set()
-
+        visited_set = set()
         while queue.size() > 0:
             new_path = queue.dequeue()
-            room = new_path[-1]
-            # if not on first while iteration, move the player to the 
-            # next room, so that when bfs returns the visited set
-            # the player will in the room at the end of the set
-            if room != room_id:
-                cur_room = new_path[-2]
-                for direct in self.rooms[cur_room]:
-                    if self.rooms[cur_room][direct] == room:
-                        player.travel(direct)
+            room = new_path[-1][0]
+            for direction, value in self.rooms[room].items():
+                if value == '?':
+                    return new_path
+            if room not in visited_set:
+                visited_set.add(room)
+                for direction, neighbor in self.rooms[room].items():
+                    if neighbor not in visited_set:
+                        next_path = list(new_path)
+                        next_path.append((neighbor, direction))
+                        queue.enqueue(next_path)
 
-            if room not in visited:
-                dir_list = []
-                for direction in self.rooms[room]:
-                    if self.rooms[room][direction] == '?':
-                        dir_list.append(direction)
-                if len(dir_list) > 0:
-                    random.shuffle(dir_list)
-                    next_dir = dir_list.pop()
-                    next_room = self.connect_rooms(next_dir, room)
-                    visited.add(next_room)
-                    return visited
-                if room != room_id:
-                    visited.add(room)
-                for roo in self.rooms[room]:
-                    next_path = list(new_path)
-                    next_path.append(self.rooms[room][roo])
-                    queue.enqueue(next_path)
-            else:
-                print("I think there are no more '?'")
-                return False
-    def rnum_to_directions(self, start_room):
-        room_id_list = self.dft_rand(start_room)
-        room_id_list.insert(0,0)
-        for room_id in room_id_list:
-            for direction in self.rooms[room_id]:
-                if self.rooms[room_id][direction] == room_id_list[room_id+1]:
-                    traversal_path.append(direction)
         
-
-
-
-# Start by writing an algorithm that picks a random unexplored direction from the 
-# player's current room, travels and logs that direction, then loops. This should
-# cause your player to walk a depth-first traversal. When you reach a 
-# dead-end (i.e. a room with no unexplored paths), walk back to the nearest 
-# room that does contain an unexplored path.
-        
-
 tg = Graph()
-tg.add_room(player.current_room.id)
-tg.dft_rand(player.current_room.id)
-print("----printing rooms test")
-print(tg.rooms)
-print('---traversal_path')
-print(traversal_path)
-
-
-#You can find the path to the shortest unexplored room by using a 
-# breadth-first search for a room with '?' for an exit. If you use the 
-# bfs code from the homework, you will need to make a few modifications
-#   
-
+tg.dft_rand()
 
 
 
